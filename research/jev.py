@@ -13,8 +13,9 @@ IN_PRICE_PER_M = 0.042  # USD / 1M input tokens (output is $0)
 
 
 def _load_env():
-    p = Path(__file__).parent / ".env"
-    if not p.exists():
+    here = Path(__file__).resolve().parent
+    p = next((c / ".env" for c in [here, *here.parents][:3] if (c / ".env").exists()), None)
+    if p is None:
         return
     for line in p.read_text().splitlines():
         line = line.strip()

@@ -1,7 +1,7 @@
 [project]
 name = "jevals"
 version = "0.1.0"
-description = "Evals for AI systems, graded by a calibrated decision model"
+description = "LLM/LLM agent eval framework. Research preview."
 requires-python = ">=3.9"
 dependencies = []
 
