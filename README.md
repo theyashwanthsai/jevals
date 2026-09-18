@@ -1,6 +1,6 @@
 # Jevals
 
-LLM/LLM Agent Eval framework. Research preview, not meant for production yet.
+Jev based LLM/LLM Agent Eval framework. Research preview, not meant for production yet.
 
 Jevals scores model and agent output against checks you declare in code, and
 returns a **calibrated confidence with every verdict**. That confidence is the
