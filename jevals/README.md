@@ -1,26 +1,68 @@
 # jevals
 
-Evals for AI systems, graded by a calibrated decision model instead of an LLM judge.
+A way to check the quality of AI output, automatically, cheaply, and often.
 
-```python
-from jevals import Suite, Judge, score, noul
+You write down what you want checked. It marks every piece of work against
+that list, gives you a report card, and flags anything it wasn't sure about so
+a person only has to look at those.
 
-suite = Suite("summarisation", [
-    score("faithful", "Is every claim in the output supported by the input?",
-          ["Contains unsupported claims", "Overstates a detail", "Fully supported"],
-          pass_at=2, critical=True),
-    noul("leaks_pii", "Does the output contain personal contact details?", expect=False),
-])
+The marking is done by Jev, a model that answers typed questions with a number
+and a confidence instead of writing prose. That confidence is what makes this
+different from asking another AI "is this good?" - you can tell the difference
+between a clear-cut verdict and a coin flip, so you know which results to
+trust and which to double-check.
 
-suite.add("case-1", input=source, output=candidate,
-          should_pass={"faithful": True, "leaks_pii": True})
+## Setup
 
-report = suite.run()          # or run(system=my_model) to generate outputs first
-report.print()
-report.save("out/run.json")
+```bash
+echo 'OPENROUTER_API_KEY=sk-or-v1-...' > .env
+pip install -e .            # optional; the examples run without it
 ```
 
-## Why not an LLM judge
+## Learn it in order
+
+Five files, smallest first. Each one runs, and each teaches exactly one thing.
+Read them in order and you'll have the whole library in about ten minutes.
+
+| file | what it teaches | lines of actual code |
+|---|---|---|
+| `examples/01_hello.py` | the smallest working eval: one check, two cases | ~8 |
+| `examples/02_the_three_checks.py` | the three kinds of question, and how pass/fail is decided | ~30 |
+| `examples/03_answer_key.py` | how to tell whether the *marker* is any good, and what to do with unsure cases | ~40 |
+| `examples/04_full_eval.py` | a real task end to end, including a case that tries to cheat the marker | ~90 |
+| `examples/05_injection_experiment.py` | an experiment, not a tutorial: can adversarial text steer a grade? | ~90 |
+
+```bash
+python3 examples/01_hello.py
+```
+
+## The whole thing in ten lines
+
+```python
+from jevals import Suite, noul, score
+
+suite = Suite("support replies", [
+    noul("is_polite", "Is this reply written politely?"),
+    noul("blames_customer", "Does this reply blame the customer?", expect=False),
+    score("helpfulness", "How helpful is this reply?",
+          ["Doesn't address it", "Acknowledges it", "Solves it"], pass_at=2),
+])
+
+suite.add("case-1", output="Thanks for flagging this! I've refunded the charge.")
+suite.add("case-2", output="You clearly didn't read the docs.")
+
+suite.run().print()
+```
+
+Three things to know and you can read any eval written with this:
+
+- **`expect=False`** flips a check, for questions where "yes" is the bad answer.
+- **`pass_at=2`** on a score means "must reach level 2 or better". Levels are
+  written worst-first and are described in words, not numbers.
+- **`conf`** in the output is how sure it was. Low confidence means the case was
+  genuinely borderline - not that it failed.
+
+## Why not just ask an LLM to judge it
 
 An LLM judge samples a token that stands for a verdict, so you recover a
 distribution only by running it N times and counting. Jev returns the

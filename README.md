@@ -1,6 +1,13 @@
 # jev-test
 
-Minimal harness for testing TypeSafe Jev (System One decision model) via OpenRouter.
+Two things live here:
+
+- **`jevals/`** — an eval framework for AI systems, graded by Jev.
+  **New here? Start at [`jevals/README.md`](jevals/README.md)**, then run
+  `python3 examples/01_hello.py`.
+- **this harness** — the probe suite used to work out what Jev can and can't do
+  in the first place. Results in [`FINDINGS.md`](FINDINGS.md).
+
 Zero dependencies — stdlib only.
 
 ## Setup

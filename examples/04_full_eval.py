@@ -120,8 +120,8 @@ def main():
           f"({len(ESCALATED) / len(report.grades):.0%} would hit an LLM judge)")
     for case, rubric, conf in sorted(ESCALATED):
         print(f"    {case:<20} {rubric:<20} conf {conf}")
-    report.save("out/summarization.json")
-    print("\n  saved out/summarization.json -- re-run and .compare() it to catch regressions")
+    report.save("out/full_eval.json")
+    print("\n  saved out/full_eval.json -- re-run and .compare() it to catch regressions")
 
 
 if __name__ == "__main__":
