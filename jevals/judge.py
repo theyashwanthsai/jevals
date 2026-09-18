@@ -5,7 +5,7 @@ handed to an expensive judge. Jev's confidence is what makes this possible --
 measured 2026-09-18 it dropped to 0.34 on a deliberately unclassifiable input
 and 0.40 on subjective ones, while sitting at 1.00 on clear cases.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 from .client import Client
@@ -51,8 +51,8 @@ class Judge:
     of their own threshold, where Jev's run-to-run jitter could flip the verdict.
     """
 
-    def __init__(self, client: Client = None, escalate_below: float = 0.0,
-                 escalator: Callable = None):
+    def __init__(self, client: Optional[Client] = None, escalate_below: float = 0.0,
+                 escalator: Optional[Callable] = None):
         self.client = client or Client()
         self.escalate_below = escalate_below
         self.escalator = escalator

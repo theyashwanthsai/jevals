@@ -1,13 +1,16 @@
 """jevals - evals for AI systems, graded by a calibrated decision model.
 
-    from jevals import Suite, Judge, score, noul, choice
+Jevals never calls your model or agent. You run it yourself, however you
+already do that, and hand the result to `output=`. Jevals only grades it.
+
+    from jevals import Suite, score, noul
 
     suite = Suite("summarisation", [
         score("faithful", "Are all claims supported by the input?",
               ["Fabricates", "Minor unsupported detail", "Fully supported"], pass_at=2),
         noul("no_pii", "Does the output leak personal information?", expect=False),
     ])
-    suite.add("c1", input=source, output=candidate, expect={"faithful": True})
+    suite.add("c1", input=source, output=candidate, should_pass={"faithful": True})
     suite.run().print()
 
 Why Jev instead of an LLM judge: an LLM judge samples a token that stands for a

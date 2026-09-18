@@ -2,7 +2,7 @@
 import concurrent.futures as cf
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .client import Client
 from .judge import Judge
@@ -20,9 +20,10 @@ class Case:
     that check *ought to pass* for this case. Note this is deliberately NOT the
     same as Check.expect: for a check declared `noul(..., expect=False)` the two
     are opposites, since a case that does the bad thing should FAIL. Supplying
-    it turns the run into a measurement of the grader as well as the system, and
-    unlocks Report.reliability(). Omit a check here when the truth is genuinely
-    arguable -- reliability is only meaningful over unambiguous labels.
+    it turns the run into a measurement of the grader as well as what you're
+    testing, and unlocks Report.reliability(). Omit a check here when the truth
+    is genuinely arguable -- reliability is only meaningful over unambiguous
+    labels.
     """
     id: str
     output: Any = None
@@ -58,7 +59,7 @@ class Case:
 
 
 class Suite:
-    def __init__(self, name, checks, judge: Judge = None, client: Client = None):
+    def __init__(self, name, checks, judge: Optional[Judge] = None, client: Optional[Client] = None):
         if not checks:
             raise ValueError("a suite needs at least one check")
         self.name = name
@@ -76,22 +77,22 @@ class Suite:
             self.cases.append(c if isinstance(c, Case) else Case(**c))
         return self
 
-    def run(self, system: Callable = None, concurrency: int = 4, progress=True):
+    def run(self, concurrency: int = 4, progress=True):
         """Grade every case.
 
-        `system` is the thing under test: callable(input) -> output, used for any
-        case whose output is None. Omit it to grade pre-recorded outputs.
+        Jevals never calls your model or agent itself -- it grades output you
+        already produced. Set `output=` on every case before calling this
+        (call your LLM or agent yourself, in your own code, then pass the
+        result in). This just grades what's there.
 
         Concurrency beats pacing for wall clock here: Jev's burst tax is
         queueing, so parallel calls overlap it rather than compounding it.
         """
         if not self.cases:
             raise ValueError("no cases")
-        for c in self.cases:
-            if c.output is None:
-                if system is None:
-                    raise ValueError(f"case {c.id!r} has no output and no system= was given")
-                c.output = system(c.input)
+        missing = [c.id for c in self.cases if c.output is None]
+        if missing:
+            raise ValueError(f"these cases have no output=: {missing}")
 
         report = Report(self.name, self.checks, self.client)
         errors = []
