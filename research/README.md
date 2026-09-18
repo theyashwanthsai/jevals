@@ -1,7 +1,7 @@
 # research
 
 The probe suite used to work out what Jev can and cannot do, before `jevals`
-was designed around it. Not part of the library — kept because the design
+was designed around it. Not part of the library - kept because the design
 decisions in `jevals/` cite these measurements.
 
 Results and conclusions: [`../FINDINGS.md`](../FINDINGS.md)

@@ -23,6 +23,6 @@ print(f"\nburst  mean {sum(burst)/len(burst):7.0f}ms")
 print(f"spaced mean {sum(spaced)/len(spaced):7.0f}ms")
 fast = sum(1 for x in spaced if x <= 500)
 print(f"\nspaced calls within advertised 500ms: {fast}/6")
-print("VERDICT:", "throttling on the OpenRouter path — model itself is fast"
+print("VERDICT:", "throttling on the OpenRouter path - model itself is fast"
       if sum(spaced)/len(spaced) < sum(burst)/len(burst) * 0.6
-      else "not throttling — the latency is inherent")
+      else "not throttling - the latency is inherent")

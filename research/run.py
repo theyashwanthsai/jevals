@@ -54,7 +54,7 @@ def check_complement(a):
     for pos, neg in [("is_urgent", "is_not_urgent"), ("is_churn_risk", "is_not_churn_risk")]:
         s = a[pos]["noul"] + a[neg]["noul"]
         out.append(f"  CHECK {pos} + {neg} = {s:.3f} "
-                   f"({'PASS' if abs(s - 1) < 0.10 else 'FAIL — violates P(x)+P(not x)=1'})")
+                   f"({'PASS' if abs(s - 1) < 0.10 else 'FAIL - violates P(x)+P(not x)=1'})")
     return "\n".join(out)
 
 

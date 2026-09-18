@@ -150,7 +150,7 @@ CASES = [
     {
         "name": "many-questions",
         "group": "claims",
-        "probe": "'Ask several questions in one call' — 12 questions, one state. "
+        "probe": "'Ask several questions in one call' - 12 questions, one state. "
                  "Compare latency/cost against the 1-question calls above.",
         "state": "Hi, my payouts have been failing for three days. I have emailed twice with no reply. "
                  "We are on the Scale plan and honestly considering Stripe at this point.",
