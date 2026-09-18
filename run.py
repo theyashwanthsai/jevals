@@ -10,7 +10,7 @@ import json, statistics, sys
 from jev import decide, cost_usd
 from cases import CASES
 
-LAT, TOKENS = [], []
+LAT, TOKENS, COSTS = [], [], []
 
 
 def fmt_answer(key, a):
@@ -31,7 +31,7 @@ def fmt_answer(key, a):
 def run_call(state, questions, raw_dump=False):
     raw, ms = decide(state, questions)
     usd, toks = cost_usd(raw)
-    LAT.append(ms); TOKENS.append(toks)
+    LAT.append(ms); TOKENS.append(toks); COSTS.append(usd)
     if raw_dump:
         print("    RAW " + json.dumps(raw)[:900])
     return raw["answers"], ms, toks, usd
@@ -153,7 +153,7 @@ def main():
             print(check_injection(results))
 
     if LAT:
-        total = sum(TOKENS) * 0.042 / 1_000_000
+        total = sum(COSTS)
         print(f"\n{'=' * 78}\nSUMMARY  {len(LAT)} calls")
         print(f"  latency   p50 {statistics.median(LAT):.0f}ms   "
               f"min {min(LAT):.0f}ms   max {max(LAT):.0f}ms   "

@@ -56,4 +56,7 @@ def cost_usd(raw):
     """Input cost + token count from the usage block."""
     u = raw.get("usage") or {}
     toks = u.get("input_tokens") or u.get("prompt_tokens") or 0
-    return toks * IN_PRICE_PER_M / 1_000_000, toks
+    usd = u.get("cost")
+    if usd is None:
+        usd = toks * IN_PRICE_PER_M / 1_000_000
+    return usd, toks
