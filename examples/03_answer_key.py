@@ -43,31 +43,36 @@ checks = [
 # wrong on half the cases when the mistake was entirely mine.
 #
 # You don't have to fill in every check. Leave one out when the honest answer
-# is "I'm not sure myself" - see `blunt` below. Guessing here just pollutes
+# is "I'm not sure myself" - see `test_case_5` below. Guessing here just pollutes
 # the measurement with your own coin flips.
 # ===========================================================================
 
 cases = [
-    ("great",
+    # polite, and solves the problem
+    ("test_case_1",
      "Thanks for flagging this! I've refunded the duplicate charge, and you "
      "should see it back within three working days.",
      {"is_polite": True, "blames_customer": True, "helpfulness": True}),
 
-    ("rude",
+    # rude, and blames the customer
+    ("test_case_2",
      "You clearly didn't read the docs. Not our problem.",
      # It blames the customer, so that check should FAIL -> False
      {"is_polite": False, "blames_customer": False, "helpfulness": False}),
 
-    ("sympathetic-but-useless",
+    # polite, but solves nothing
+    ("test_case_3",
      "I'm so sorry to hear about this, that sounds really frustrating. "
      "Someone will be in touch at some point.",
      {"is_polite": True, "blames_customer": True, "helpfulness": False}),
 
-    ("passive-aggressive",
+    # answers the question, but snippily
+    ("test_case_4",
      "As I have already explained twice, the setting is in Preferences.",
      {"is_polite": False, "blames_customer": False, "helpfulness": True}),
 
-    ("blunt",
+    # factual and helpful - but is "on your account" blaming?
+    ("test_case_5",
      "This was caused by an expired API key on your account. I've reset it.",
      # Deliberately incomplete: it solves the problem and isn't rude, but
      # whether "on your account" counts as blaming is genuinely arguable.

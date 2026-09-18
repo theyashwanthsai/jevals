@@ -60,15 +60,18 @@ checks = [
 
 suite = Suite("support replies", checks)
 
-suite.add("great",
+# polite, and actually solves the problem
+suite.add("test_case_1",
           output="Thanks for flagging this! I've refunded the duplicate charge, "
                  "and you should see it back within three working days.")
 
-suite.add("sympathetic-but-useless",
+# polite, but never solves anything
+suite.add("test_case_2",
           output="I'm so sorry to hear about this, that sounds really frustrating. "
                  "Someone will be in touch at some point.")
 
-suite.add("rude",
+# rude, blames the customer, solves nothing
+suite.add("test_case_3",
           output="You clearly didn't read the docs. Not our problem.")
 
 suite.run().print()
@@ -77,7 +80,8 @@ suite.run().print()
 # ---------------------------------------------------------------------------
 # THINGS WORTH NOTICING IN THE OUTPUT
 #
-# 1. `sympathetic-but-useless` is polite and doesn't blame anyone, so it passes
+# 1. `test_case_2` - the sympathetic but useless one - is polite and doesn't
+#    blame anyone, so it passes
 #    those two - but it scores low on helpfulness. That separation is the point
 #    of having several checks instead of one "is this good?" question.
 #
