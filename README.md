@@ -13,11 +13,6 @@ number. So there's no judge prompt to write, no text to parse, no retry loop.
 32 answers cost about **$0.0002**, cheap enough to check every case, every
 time, instead of a random sample.
 
-```bash
-pip install -e .
-echo 'OPENROUTER_API_KEY=sk-or-v1-...' > .env
-```
-
 ---
 
 ## Grading what your LLM or agent already produced
@@ -104,11 +99,10 @@ reshape it and doesn't run it for you.
 
 An LLM judge picks a word that stands for a verdict, then writes a reason for
 the word it already picked. What you get is a label with no honest sense of
-how sure it is. The usual fix is to run the judge several times and count the
-votes, which just means paying more to rebuild, roughly, a number the model
-already had and threw away.
+how sure it is. I never really liked the idea of llm as a judge, but we use it heavily everywhere eitherways. The usual hack is to run the judge several times and count the
+votes, or running an ensemble of models, which just means paying more to rebuild, roughly, a number the modele already had and threw away.
 
-Jev gives you that number directly, in one call. Jevals turns it into a
+Jev is the right direction I feel. Jev gives you that number directly, in one call. Jevals turns it into a
 pass/fail plus a confidence you can set a bar on. So instead of paying an
 expensive model to check a sample of your cases, you check every case cheaply
 and only send the unclear ones further.
