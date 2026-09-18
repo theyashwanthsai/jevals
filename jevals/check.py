@@ -1,6 +1,6 @@
-"""Rubrics: declarative grading dimensions.
+"""Checks: declarative grading dimensions.
 
-A rubric is data, not a prompt. It compiles to a Jev question and knows how to
+A check is data, not a prompt. It compiles to a Jev question and knows how to
 turn an answer into (value, confidence, passed).
 """
 from dataclasses import dataclass, field
@@ -12,7 +12,7 @@ DEAD_BAND = 0.02
 
 
 @dataclass
-class Rubric:
+class Check:
     name: str
     type: str                       # "noul" | "choice" | "score"
     instructions: str
@@ -74,7 +74,7 @@ class Rubric:
                 return v, conf, v >= self.pass_at - 0.5, abs(v - self.pass_at) < DEAD_BAND
             # `score` is an expectation, sum(level * p(level)), so it almost never
             # lands exactly on a level -- comparing it to pass_at directly makes the
-            # top level unreachable (a rubric 96% certain of level 2 returns 1.96).
+            # top level unreachable (a check 96% certain of level 2 returns 1.96).
             # Ask the distribution the question the author actually meant:
             # "is this at least level `pass_at`?" -> P(level >= pass_at) > 0.5.
             mass = sum(p for k, p in probs.items() if int(k) >= self.pass_at)
@@ -97,28 +97,28 @@ def noul(name, instructions, expect=True, *, true=None, false=None,
 
     Prefer `score` when you need to rank or discriminate at the extremes --
     measured 2026-09-18, noul saturated at 0.98 for both a production column
-    drop and `rm -rf /`, while a score rubric separated them cleanly.
+    drop and `rm -rf /`, while a score check separated them cleanly.
     """
     criteria = None
     if true or false:
         criteria = {k: v for k, v in (("true", true), ("false", false)) if v}
-    return Rubric(name, "noul", instructions, criteria, expect=expect,
+    return Check(name, "noul", instructions, criteria, expect=expect,
                   pass_at=pass_at, weight=weight, critical=critical)
 
 
 def choice(name, instructions, options, expect=None, *, weight=1.0, critical=False):
     """Pick one of `options` (dict of option -> description)."""
-    return Rubric(name, "choice", instructions, options, expect=expect,
+    return Check(name, "choice", instructions, options, expect=expect,
                   weight=weight, critical=critical)
 
 
 def score(name, instructions, levels, pass_at=None, *, weight=1.0, critical=False):
-    """Ordered rubric. `levels` is a list of descriptions, 0-indexed.
+    """Ordered check. `levels` is a list of descriptions, 0-indexed.
 
     `pass_at` is the minimum level counted as a pass; defaults to the top level.
     A case passes when P(level >= pass_at) > 0.5, computed from the returned
     distribution -- not by comparing the expectation to the threshold, which
     would make the top level unreachable.
     """
-    return Rubric(name, "score", instructions, list(levels), pass_at=pass_at,
+    return Check(name, "score", instructions, list(levels), pass_at=pass_at,
                   weight=weight, critical=critical)

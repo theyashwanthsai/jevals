@@ -19,9 +19,9 @@ escalate only what's genuinely unclear".
 from .client import Client, JevError
 from .judge import Grade, Judge
 from .report import Report
-from .rubric import DEAD_BAND, Rubric, choice, noul, score
+from .check import DEAD_BAND, Check, choice, noul, score
 from .suite import Case, Suite
 
-__all__ = ["Suite", "Case", "Judge", "Grade", "Report", "Rubric", "Client",
+__all__ = ["Suite", "Case", "Judge", "Grade", "Report", "Check", "Client",
            "JevError", "score", "noul", "choice", "DEAD_BAND"]
 __version__ = "0.1.0"

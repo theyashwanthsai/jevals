@@ -14,9 +14,15 @@ class Case:
     """One thing to grade.
 
     `output` is what's under review. `input` is what produced it, `reference`
-    is a gold answer if you have one. `expect` is optional ground truth --
-    {rubric_name: should_pass} -- which turns the run into a measurement of the
-    *grader* as well as the system, and unlocks Report.reliability().
+    is a gold answer if you have one.
+
+    `should_pass` is optional ground truth -- {check_name: bool} saying whether
+    that check *ought to pass* for this case. Note this is deliberately NOT the
+    same as Check.expect: for a check declared `noul(..., expect=False)` the two
+    are opposites, since a case that does the bad thing should FAIL. Supplying
+    it turns the run into a measurement of the grader as well as the system, and
+    unlocks Report.reliability(). Omit a check here when the truth is genuinely
+    arguable -- reliability is only meaningful over unambiguous labels.
     """
     id: str
     output: Any = None
@@ -29,7 +35,7 @@ class Case:
         """Always a structured dict, never concatenated text.
 
         Hygiene, not a security guarantee. It keeps untrusted output in its own
-        labelled field so a rubric can refer to "the output" unambiguously and
+        labelled field so a check can refer to "the output" unambiguously and
         no delimiter has to be trusted.
 
         Do not mistake it for an injection defence. Measured A/B 2026-09-18
@@ -52,11 +58,11 @@ class Case:
 
 
 class Suite:
-    def __init__(self, name, rubrics, judge: Judge = None, client: Client = None):
-        if not rubrics:
-            raise ValueError("a suite needs at least one rubric")
+    def __init__(self, name, checks, judge: Judge = None, client: Client = None):
+        if not checks:
+            raise ValueError("a suite needs at least one check")
         self.name = name
-        self.rubrics = list(rubrics)
+        self.checks = list(checks)
         self.client = client or (judge.client if judge else Client())
         self.judge = judge or Judge(client=self.client)
         self.cases: List[Case] = []
@@ -87,11 +93,11 @@ class Suite:
                     raise ValueError(f"case {c.id!r} has no output and no system= was given")
                 c.output = system(c.input)
 
-        report = Report(self.name, self.rubrics, self.client)
+        report = Report(self.name, self.checks, self.client)
         errors = []
 
         def work(case):
-            return case, *self.judge.grade(case, self.rubrics)
+            return case, *self.judge.grade(case, self.checks)
 
         with cf.ThreadPoolExecutor(max_workers=max(1, concurrency)) as ex:
             futures = {ex.submit(work, c): c for c in self.cases}

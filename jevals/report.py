@@ -5,9 +5,9 @@ from pathlib import Path
 
 
 class Report:
-    def __init__(self, name, rubrics, client):
+    def __init__(self, name, checks, client):
         self.name = name
-        self.rubrics = {r.name: r for r in rubrics}
+        self.checks = {r.name: r for r in checks}
         self.client = client
         self.rows = []          # [(case, [Grade], meta)]
         self.errors = []
@@ -26,10 +26,10 @@ class Report:
     def grades(self):
         return [g for _, gs, _ in self.rows for g in gs]
 
-    def by_rubric(self):
+    def by_check(self):
         out = defaultdict(list)
         for g in self.grades:
-            out[g.rubric].append(g)
+            out[g.check].append(g)
         return dict(out)
 
     @staticmethod
@@ -38,7 +38,7 @@ class Report:
 
     @staticmethod
     def case_score(grades):
-        """Weighted fraction of rubrics passed; 0 if any critical rubric failed."""
+        """Weighted fraction of checks passed; 0 if any critical check failed."""
         if any(g.critical and not g.passed for g in grades):
             return 0.0
         total = sum(g.weight for g in grades) or 1.0
@@ -66,13 +66,13 @@ class Report:
             "cost_usd": self.client.cost,
             "latency_p50_ms": statistics.median(lat),
             "latency_max_ms": max(lat),
-            "rubrics": {
+            "checks": {
                 name: {
                     "pass_rate": sum(1 for g in v if g.passed) / len(v),
                     "mean_confidence": statistics.mean([g.confidence for g in v]),
                     "borderline": sum(1 for g in v if g.borderline),
                 }
-                for name, v in self.by_rubric().items()
+                for name, v in self.by_check().items()
             },
         }
 
@@ -89,8 +89,8 @@ class Report:
         pts = []
         for case, grades, _ in self.rows:
             for g in grades:
-                if g.rubric in case.should_pass:
-                    pts.append((g.confidence, g.passed == case.should_pass[g.rubric]))
+                if g.check in case.should_pass:
+                    pts.append((g.confidence, g.passed == case.should_pass[g.check]))
         if not pts:
             return None
         out = []
@@ -119,7 +119,7 @@ class Report:
               f"({s['pass_rate']:.0%})   mean score {s['mean_case_score']:.2f}")
         print(f"  grades      {s['grades']}   mean confidence {s['mean_confidence']:.2f}   "
               f"borderline {s['borderline']}   escalated {s['escalated']}")
-        for name, r in s["rubrics"].items():
+        for name, r in s["checks"].items():
             print(f"    {name:<24} {r['pass_rate']:>6.0%} pass   conf {r['mean_confidence']:.2f}"
                   + (f"   {r['borderline']} borderline" if r["borderline"] else ""))
         if self.errors:
@@ -145,7 +145,7 @@ class Report:
             "reliability": self.reliability(),
             "cases": [
                 {"id": c.id, "passed": self.case_passed(gs), "score": self.case_score(gs),
-                 "grades": [{"rubric": g.rubric, "value": g.value, "confidence": g.confidence,
+                 "grades": [{"check": g.check, "value": g.value, "confidence": g.confidence,
                              "passed": g.passed, "borderline": g.borderline,
                              "escalated": g.escalated, "note": g.note} for g in gs]}
                 for c, gs, _ in sorted(self.rows, key=lambda r: r[0].id)
@@ -157,7 +157,7 @@ class Report:
         return path
 
     def compare(self, baseline_path):
-        """Diff against a saved run. Returns regressions/improvements per rubric+case."""
+        """Diff against a saved run. Returns regressions/improvements per check+case."""
         base = json.loads(Path(baseline_path).read_text())
         old_cases = {c["id"]: c for c in base["cases"]}
         regressions, improvements = [], []
@@ -165,15 +165,15 @@ class Report:
             old = old_cases.get(c.id)
             if not old:
                 continue
-            old_g = {g["rubric"]: g for g in old["grades"]}
+            old_g = {g["check"]: g for g in old["grades"]}
             for g in gs:
-                o = old_g.get(g.rubric)
+                o = old_g.get(g.check)
                 if not o:
                     continue
                 if o["passed"] and not g.passed:
-                    regressions.append((c.id, g.rubric, o["value"], g.value))
+                    regressions.append((c.id, g.check, o["value"], g.value))
                 elif not o["passed"] and g.passed:
-                    improvements.append((c.id, g.rubric, o["value"], g.value))
+                    improvements.append((c.id, g.check, o["value"], g.value))
         return {
             "baseline_pass_rate": base["summary"]["pass_rate"],
             "pass_rate": self.summary()["pass_rate"],

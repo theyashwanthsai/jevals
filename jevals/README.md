@@ -62,6 +62,26 @@ Three things to know and you can read any eval written with this:
 - **`conf`** in the output is how sure it was. Low confidence means the case was
   genuinely borderline - not that it failed.
 
+## How the pieces fit
+
+```
+Check           one question you want answered
+[Check, ...]    your marking scheme — just a list, no class needed
+Case            one piece of work being marked
+Suite           the marking scheme + the pile of work + the runner
+```
+
+A `Suite` is not the same thing as a marking scheme: the scheme is reusable
+across projects, while the Suite is one specific batch of work being marked
+against it. That's why the name comes from testing ("test suite") rather than
+from marking — what defines it is that it holds cases.
+
+```python
+checks = [...]                           # the scheme — reuse this anywhere
+suite  = Suite("March backlog", checks)  # the scheme applied to one batch
+suite.add("ticket-1", output=...)        # only a Suite has these
+```
+
 ## Why not just ask an LLM to judge it
 
 An LLM judge samples a token that stands for a verdict, so you recover a
@@ -70,7 +90,7 @@ distribution in one call with a confidence attached. That inverts the economics:
 instead of judging a sample of cases with an expensive model, you judge every
 case cheaply and escalate only what's genuinely unclear.
 
-Measured on `examples/summarization.py`: 8 cases x 4 rubrics = 32 grades for
+Measured on `examples/04_full_eval.py`: 8 cases x 4 checks = 32 grades for
 **$0.000193** total, at **100% agreement** with hand-labelled ground truth on all
 30 unambiguous labels. The 2 labels omitted as genuinely arguable were the 2
 grades Jev independently flagged lowest-confidence (0.04 and 0.64).
@@ -78,9 +98,9 @@ grades Jev independently flagged lowest-confidence (0.04 and 0.64).
 ## The cascade
 
 ```python
-def llm_escalator(state, rubric, grade):
+def llm_escalator(state, check, grade):
     # called only for low-confidence or borderline grades
-    return {"passed": ask_a_strong_model(state, rubric), "note": "escalated"}
+    return {"passed": ask_a_strong_model(state, check), "note": "escalated"}
 
 Judge(escalate_below=0.65, escalator=llm_escalator)
 ```
@@ -93,21 +113,21 @@ have on its own.
 
 Pick `escalate_below` from `report.reliability()`, not from taste.
 
-## Rubrics
+## Checks
 
 | constructor | returns | passes when |
 |---|---|---|
 | `noul(name, q, expect=True)` | probability 0–1 | `p >= pass_at` (or `<=` if `expect=False`) |
-| `score(name, q, levels, pass_at=N)` | float on the rubric | `P(level >= pass_at) > 0.5` |
+| `score(name, q, levels, pass_at=N)` | position on your scale | `P(level >= pass_at) > 0.5` |
 | `choice(name, q, options, expect="x")` | chosen option | choice matches `expect` |
 
 - **Prefer `score` over `noul` whenever you need to rank or discriminate at the
   extremes.** Measured: `noul` returned 0.98 for *both* a production column drop
-  and `rm -rf /`; a `score` rubric separated them (3.88 vs 3.99) and stayed
+  and `rm -rf /`; a `score` scale separated them (3.88 vs 3.99) and stayed
   monotonic across a 6-step ladder. Saturation silently flattens the top of a scale.
 - `pass_at` on a score is evaluated as `P(level >= pass_at) > 0.5`, from the
   returned distribution. Comparing the raw score would make the top level
-  unreachable, since `score` is an expectation (Σ level×prob) and a rubric 96%
+  unreachable, since `score` is an expectation (Σ level×prob) and a check that is 96%
   certain of level 2 returns 1.96.
 - `critical=True` makes any failure zero the case score.
 - Jev reports `confidence` for `choice` and `score` but **not** for `noul`, so
@@ -115,8 +135,8 @@ Pick `escalate_below` from `report.reliability()`, not from taste.
 
 ## Ground truth and reliability
 
-`should_pass={rubric: bool}` is whether that rubric *ought to pass* — deliberately
-not the same as `Rubric.expect`, which is the expected *answer*. For
+`should_pass={check: bool}` is whether that check *ought to pass* — deliberately
+not the same as `Check.expect`, which is the expected *answer*. For
 `noul(..., expect=False)` they are opposites: a case that does the bad thing
 should FAIL. Supplying `should_pass` turns a run into a measurement of the grader
 as well as the system, and enables:
@@ -129,22 +149,22 @@ RELIABILITY (grader accuracy vs your ground truth)
 ```
 
 This is the only evidence that justifies a threshold. Vendor calibration on
-vendor benchmarks does not transfer to your rubrics automatically — measure it.
-Omit a rubric from `should_pass` when the truth is genuinely arguable.
+vendor benchmarks does not transfer to your checks automatically — measure it.
+Omit a check from `should_pass` when the truth is genuinely arguable.
 
 ## Regressions
 
 ```python
 report.save("out/baseline.json")
 # ...change the system...
-print(suite.run().compare("out/baseline.json"))   # per-case, per-rubric deltas
+print(suite.run().compare("out/baseline.json"))   # per-case, per-check deltas
 ```
 
 ## Notes from measurement
 
 - **Ask semantic questions, not arithmetic ones.** Jev reads dates as text and
   is not a calculator. A "within 14 days?" question on a 15-day gap came back
-  0.41 — the right side of the line by a hair. Don't put interval math in a rubric.
+  0.41 — the right side of the line by a hair. Don't put interval math in a check.
 - **Concurrency beats pacing.** Bursts on OpenRouter's alpha endpoint incur a
   quantized ~1–2.5s queueing tax; spaced calls return in ~415ms. `run()`
   parallelises so the tax overlaps instead of compounding. Set
@@ -161,7 +181,7 @@ print(suite.run().compare("out/baseline.json"))   # per-case, per-rubric deltas
 | file | what |
 |---|---|
 | `client.py` | HTTP, retry on 429/529, usage accounting |
-| `rubric.py` | `Rubric` + `noul` / `choice` / `score` constructors |
+| `check.py` | `Check` + `noul` / `choice` / `score` constructors |
 | `judge.py` | `Grade`, `Judge`, the escalation cascade |
 | `suite.py` | `Case`, `Suite`, the parallel runner |
 | `report.py` | aggregation, `reliability()`, `compare()` |
